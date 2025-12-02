@@ -39,7 +39,7 @@ extensions = get_extensions()
 
 setup(
     name="biyoves",
-    version="0.3.0",
+    version="0.4.0",
     author="BiyoVes",
     description="Biyometrik fotoğraf işleme kütüphanesi - Kolay kullanımlı vesikalık ve biyometrik fotoğraf hazırlama aracı",
     long_description=long_description,
