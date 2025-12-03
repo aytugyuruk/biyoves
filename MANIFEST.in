@@ -1,6 +1,3 @@
 include README.md
 recursive-include biyoves *.onnx
 recursive-include biyoves *.py
-exclude biyoves/*.c
-exclude biyoves/*.so
-exclude biyoves/*.pyd
