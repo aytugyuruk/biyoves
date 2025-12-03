@@ -65,11 +65,12 @@ class BiometricIDGenerator:
         face = faces[0]
         landmarks = face.landmark_3d_68  # 68 point landmarks
         
-        # Önemli noktaları al (10 = alın, 8 = çene, 0 = sol yüz, 16 = sağ yüz)
-        forehead_y = int(landmarks[27, 1])  # Burun başı
-        chin_y = int(landmarks[8, 1])  # Çene ucu
-        right_ear_x = int(landmarks[16, 0])  # Sağ yüz knarı
-        left_ear_x = int(landmarks[0, 0])  # Sol yüz knarı
+        # InsightFace 68-point landmark indeksleri:
+        # 10: Alın, 57: Çene, 0: Sol yüz, 16: Sağ yüz
+        forehead_y = int(landmarks[10, 1])  # Alın
+        chin_y = int(landmarks[57, 1])  # Çene ucu
+        right_ear_x = int(landmarks[16, 0])  # Sağ yüz sınırı
+        left_ear_x = int(landmarks[0, 0])  # Sol yüz sınırı
         
         face_center_x = (right_ear_x + left_ear_x) // 2
         hair_top_y = self._get_hair_top_y(original_image)

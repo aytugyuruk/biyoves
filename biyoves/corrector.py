@@ -30,11 +30,13 @@ class FaceOrientationCorrector:
         landmarks = face.landmark_3d_68
         h, w = image_shape[:2]
         
-        # 36, 39 = sağ göz (0-indexed), 42, 45 = sol göz, 30 = burun, 48, 57 = ağız
-        right_eye_y = landmarks[36, 1]
-        left_eye_y = landmarks[42, 1]
-        nose_y = landmarks[30, 1]
-        mouth_y = landmarks[57, 1]
+        # InsightFace 68-point landmark indeksleri:
+        # Sol göz: 36-41, Sağ göz: 42-47
+        # 30: Burun ucu, 33-35: Burun alt, 48-67: Ağız
+        left_eye_y = (landmarks[36, 1] + landmarks[39, 1]) / 2  # Sol göz
+        right_eye_y = (landmarks[42, 1] + landmarks[45, 1]) / 2  # Sağ göz
+        nose_y = landmarks[30, 1]  # Burun ucu
+        mouth_y = landmarks[57, 1]  # Ağız merkezi
 
         eyes_above_nose = (right_eye_y < nose_y) and (left_eye_y < nose_y)
         nose_above_mouth = nose_y < mouth_y
