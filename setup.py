@@ -12,7 +12,7 @@ long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists
 
 setup(
     name="biyoves",
-    version="0.6.0",
+    version="0.6.1",
     author="BiyoVes",
     description="Biyometrik fotoğraf işleme kütüphanesi - Kolay kullanımlı vesikalık ve biyometrik fotoğraf hazırlama aracı",
     long_description=long_description,
