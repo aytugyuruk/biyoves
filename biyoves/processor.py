@@ -2,22 +2,20 @@ import cv2
 import numpy as np
 
 try:
-    import mediapipe as mp
+    from insightface.app import FaceAnalysis
 except ImportError:
-    mp = None
+    FaceAnalysis = None
 
 class BiometricIDGenerator:
     def __init__(self):
-        if mp is None:
+        if FaceAnalysis is None:
             raise ImportError(
-                "MediaPipe kutuphanesi yuklenmemis. \n"
-                "Kurulum: pip install 'mediapipe>=0.10.0'"
+                "InsightFace kutuphanesi yuklenmemis. \n"
+                "Kurulum: pip install insightface"
             )
-        self.mp_face_mesh = mp.solutions.face_mesh
-        self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True)
-        
-        self.mp_selfie_segmentation = mp.solutions.selfie_segmentation
-        self.segmentation = self.mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
+        # InsightFace modelini başlat - landmarks ve segmentasyon için
+        self.face_app = FaceAnalysis(name="buffalo_l", providers=['CPUProvider'])
+        self.face_app.prepare(ctx_id=0, det_thresh=0.5, det_size=(640, 640))
 
         self.DPI = 300
         self.PIXELS_PER_MM = self.DPI / 25.4
@@ -30,11 +28,15 @@ class BiometricIDGenerator:
         }
 
     def _get_hair_top_y(self, image):
-        img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = self.segmentation.process(img_rgb)
-        if results.segmentation_mask is None: return None
-        mask = results.segmentation_mask > 0.5
-        rows, _ = np.where(mask)
+        """Basit ön işleme yaparak saç başı pozisyonunu tahmin et"""
+        # Gri tona dönüştür ve köprü bulma
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Threshold ile cilt/vücut ayrımı yap
+        _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
+        # Saçlara değiştirilmek için ön tarafı kes
+        h = image.shape[0]
+        binary[h//2:, :] = 0
+        rows, _ = np.where(binary)
         return np.min(rows) if len(rows) > 0 else 0
 
     def process_photo(self, image_input, photo_type="biyometrik"):
@@ -53,16 +55,21 @@ class BiometricIDGenerator:
         h_orig, w_orig, _ = original_image.shape
         img_rgb = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
-        results_mesh = self.face_mesh.process(img_rgb)
-        if not results_mesh.multi_face_landmarks:
+        # InsightFace ile yüz tespiti ve landmarks al
+        faces = self.face_app.get(img_rgb)
+        if not faces:
             print("Hata: İşlenecek yüz bulunamadı.")
             return None
 
-        landmarks = results_mesh.multi_face_landmarks[0].landmark
-        forehead_y = int(landmarks[10].y * h_orig)
-        chin_y = int(landmarks[152].y * h_orig)
-        right_ear_x = int(landmarks[234].x * w_orig)
-        left_ear_x = int(landmarks[454].x * w_orig)
+        # İlk yüzü al
+        face = faces[0]
+        landmarks = face.landmark_3d_68  # 68 point landmarks
+        
+        # Önemli noktaları al (10 = alın, 8 = çene, 0 = sol yüz, 16 = sağ yüz)
+        forehead_y = int(landmarks[27, 1])  # Burun başı
+        chin_y = int(landmarks[8, 1])  # Çene ucu
+        right_ear_x = int(landmarks[16, 0])  # Sağ yüz knarı
+        left_ear_x = int(landmarks[0, 0])  # Sol yüz knarı
         
         face_center_x = (right_ear_x + left_ear_x) // 2
         hair_top_y = self._get_hair_top_y(original_image)

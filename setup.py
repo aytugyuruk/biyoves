@@ -12,7 +12,7 @@ long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists
 
 setup(
     name="biyoves",
-    version="0.5.0",
+    version="0.6.0",
     author="BiyoVes",
     description="Biyometrik fotoğraf işleme kütüphanesi - Kolay kullanımlı vesikalık ve biyometrik fotoğraf hazırlama aracı",
     long_description=long_description,
@@ -24,9 +24,9 @@ setup(
     },
     include_package_data=True,
     install_requires=[
-        "opencv-python-headless>=4.5.0",  # GUI olmadan, 20-30MB daha hafif
+        "opencv-python>=4.5.0",
         "numpy>=1.19.0",
-        "mediapipe>=0.10.0,<0.11.0",  # Spesifik versiyonla minimal indirim
+        "insightface>=0.7.0",
         "onnxruntime>=1.10.0",
     ],
     python_requires=">=3.7",

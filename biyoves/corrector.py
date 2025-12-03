@@ -2,20 +2,21 @@ import cv2
 import numpy as np
 
 try:
-    import mediapipe as mp
+    from insightface.app import FaceAnalysis
 except ImportError:
-    mp = None
+    FaceAnalysis = None
 
 class FaceOrientationCorrector:
     def __init__(self, verbose=False):
-        if mp is None:
+        if FaceAnalysis is None:
             raise ImportError(
-                "MediaPipe kutuphanesi yuklenmemis. \n"
-                "Kurulum: pip install 'mediapipe>=0.10.0'"
+                "InsightFace kutuphanesi yuklenmemis. \n"
+                "Kurulum: pip install insightface"
             )
         self.verbose = verbose
-        self.mp_face_detection = mp.solutions.face_detection
-        self.face_detection = self.mp_face_detection.FaceDetection(min_detection_confidence=0.4, model_selection=1)
+        # InsightFace modelini başlat - yüz tespiti için
+        self.face_app = FaceAnalysis(name="buffalo_l", providers=['CPUProvider'])
+        self.face_app.prepare(ctx_id=0, det_thresh=0.4, det_size=(640, 640))
 
     def _rotate_image(self, image, angle):
         if angle == 0: return image
@@ -24,14 +25,23 @@ class FaceOrientationCorrector:
         if angle == 270: return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return image
 
-    def _analyze_face(self, detection):
-        score = detection.score[0]
-        kp = detection.location_data.relative_keypoints
-        right_eye, left_eye, nose, mouth = kp[0], kp[1], kp[2], kp[3]
+    def _analyze_face(self, face, image_shape):
+        """InsightFace face landmark'larını analiz et"""
+        landmarks = face.landmark_3d_68
+        h, w = image_shape[:2]
+        
+        # 36, 39 = sağ göz (0-indexed), 42, 45 = sol göz, 30 = burun, 48, 57 = ağız
+        right_eye_y = landmarks[36, 1]
+        left_eye_y = landmarks[42, 1]
+        nose_y = landmarks[30, 1]
+        mouth_y = landmarks[57, 1]
 
-        eyes_above_nose = (right_eye.y < nose.y) and (left_eye.y < nose.y)
-        nose_above_mouth = nose.y < mouth.y
-        eyes_level = abs(right_eye.y - left_eye.y) < 0.15 
+        eyes_above_nose = (right_eye_y < nose_y) and (left_eye_y < nose_y)
+        nose_above_mouth = nose_y < mouth_y
+        eyes_level = abs(right_eye_y - left_eye_y) < (h * 0.15)
+        
+        # Güven puanı (InsightFace'te bbox ve landmark confidence'ı var)
+        score = face.det_score if hasattr(face, 'det_score') else 1.0
         
         return (eyes_above_nose and nose_above_mouth and eyes_level), score
 
@@ -50,11 +60,14 @@ class FaceOrientationCorrector:
         for angle in rotation_checks:
             current_img = self._rotate_image(original_image, angle)
             img_rgb = cv2.cvtColor(current_img, cv2.COLOR_BGR2RGB)
-            results = self.face_detection.process(img_rgb)
             
-            if results.detections:
-                best_detection = max(results.detections, key=lambda d: d.score[0])
-                is_valid, score = self._analyze_face(best_detection)
+            # InsightFace ile yüz tespiti yap
+            faces = self.face_app.get(img_rgb)
+            
+            if faces:
+                # En yüksek güven puanına sahip yüzü al
+                best_face = max(faces, key=lambda f: f.det_score if hasattr(f, 'det_score') else 0)
+                is_valid, score = self._analyze_face(best_face, current_img.shape)
                 if is_valid:
                     candidates.append((score, angle, current_img))
 
