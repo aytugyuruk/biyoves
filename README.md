@@ -88,7 +88,7 @@ img.create_image("abd_vizesi", "4lu", "abd_4lu.jpg")
 - Python >= 3.7
 - OpenCV
 - NumPy
-- MediaPipe
+
 - ONNX Runtime
 
 ## Lisans

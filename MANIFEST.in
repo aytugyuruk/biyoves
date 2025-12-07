@@ -1,6 +1,6 @@
 include README.md
-recursive-include biyoves *.onnx
-recursive-include biyoves *.py
-exclude biyoves/*.c
-exclude biyoves/*.so
-exclude biyoves/*.pyd
+recursive-include src/biyoves *.onnx
+recursive-include src/biyoves *.py
+exclude src/biyoves/*.c
+exclude src/biyoves/*.so
+exclude src/biyoves/*.pyd

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "biyoves"
-version = "0.5.0"
+version = "1.0.0"
 description = "Yapay Zeka destekli Biyometrik, Vesikalık ve Vize fotoğrafları oluşturma kütüphanesi."
 readme = "README.md"
 requires-python = ">=3.7"
@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["biyometrik", "fotoğraf", "vesikalık", "vize", "yapay zeka"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Multimedia :: Graphics :: Capture :: Digital Camera",
@@ -28,9 +28,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "opencv-python>=4.5.0",
+    "opencv-python-headless>=4.5.0",
     "numpy>=1.19.0",
-    "mediapipe>=0.10.0,<0.11.0",  # Spesifik versiyonla minimal indirim
     "onnxruntime>=1.10.0",
 ]
 
@@ -40,8 +39,9 @@ Documentation = "https://github.com/aytugyuruk/biyoves#readme"
 Repository = "https://github.com/aytugyuruk/biyoves"
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 packages = ["biyoves"]
 
 [tool.setuptools.package-data]
-biyoves = ["modnet.onnx"]
+biyoves = ["modnet.onnx", "det_500m.onnx", "2d106det.onnx"]
 
